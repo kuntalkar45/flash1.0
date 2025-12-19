@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flashlight Match Switch</title>
+
+<style>
+body {
+  margin: 0;
+  height: 100vh;
+  background: radial-gradient(circle at top, #020617, #000);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Segoe UI', sans-serif;
+  overflow: hidden;
+}
+
+.container {
+  width: 140px;
+  height: 360px;
+  background: linear-gradient(180deg, #111, #000);
+  border-radius: 80px;
+  box-shadow: 0 0 40px rgba(0,255,255,.25);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 20px;
+}
+
+.match {
+  width: 40px;
+  height: 260px;
+  background: linear-gradient(180deg, #ffedd5, #c2410c);
+  border-radius: 30px;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.5s ease;
+}
+
+.match::before {
+  content: '';
+  position: absolute;
+  top: -35px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 55px;
+  height: 55px;
+  background: radial-gradient(circle, #fffbeb, #f97316);
+  border-radius: 50%;
+  box-shadow: 0 0 30px #fb923c;
+  transition: opacity 0.4s ease, box-shadow 0.4s ease;
+  opacity: 0;
+}
+
+.match.on {
+  transform: translateY(80px);
+}
+
+.match.on::before {
+  opacity: 1;
+  box-shadow: 0 0 60px #facc15, 0 0 120px #fb923c;
+}
+
+.status {
+  position: absolute;
+  bottom: 40px;
+  color: #e5e7eb;
+  font-size: 14px;
+  opacity: 0.7;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <div class="match" id="match"></div>
+  <div class="status" id="status">TAP TO LIGHT</div>
+</div>
+
+<script>
+let stream = null;
+let torchOn = false;
+
+const match = document.getElementById('match');
+const statusText = document.getElementById('status');
+
+async function toggleTorch() {
+  try {
+    if (!stream) {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" }
+      });
+    }
+
+    const track = stream.getVideoTracks()[0];
+    const capabilities = track.getCapabilities();
+
+    if (!capabilities.torch) {
+      alert("Flashlight not supported on this device");
+      return;
+    }
+
+    torchOn = !torchOn;
+
+    await track.applyConstraints({
+      advanced: [{ torch: torchOn }]
+    });
+
+    match.classList.toggle("on", torchOn);
+    statusText.textContent = torchOn ? "FLASHLIGHT ON" : "FLASHLIGHT OFF";
+
+  } catch (err) {
+    alert("Permission denied or not supported");
+    console.error(err);
+  }
+}
+
+match.addEventListener("click", toggleTorch);
+</script>
+
+</body>
+</html>
